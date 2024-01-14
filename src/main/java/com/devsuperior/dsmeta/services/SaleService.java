@@ -3,9 +3,12 @@ package com.devsuperior.dsmeta.services;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.devsuperior.dsmeta.dto.SaleSallerDTO;
+import com.devsuperior.dsmeta.dto.SaleSumDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,12 +32,26 @@ public class SaleService {
 
 	public Page<SaleSallerDTO> findByNameAndDate(String name, String minDate, String maxDate, Pageable pageable) {
 
-		LocalDate minLocalDate = minDate.isEmpty()
-				? LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault()).minusYears(1L)
-				: LocalDate.parse(minDate);
-		LocalDate maxLocalDate = maxDate.isEmpty() ? LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault())
-				: LocalDate.parse(maxDate);
+		List<LocalDate> dates = convertToLocalDate(minDate, maxDate);
 
-		return repository.searchByDateAndName(name, minLocalDate, maxLocalDate, pageable);
+		// minDate = 0, maxDate = 1
+		return repository.searchByDateAndName(name, dates.get(0), dates.get(1), pageable);
+	}
+
+	public List<SaleSumDTO> findSummary(String minDate, String maxDate) {
+		List<LocalDate> dates = convertToLocalDate(minDate, maxDate);
+
+		// minDate = 0, maxDate = 1
+		return repository.searchSummaryByDate(dates.get(0), dates.get(1));
+	}
+
+	private List<LocalDate> convertToLocalDate(String minDate, String maxDate) {
+		List<LocalDate> list = new ArrayList<>();
+		list.add(minDate.isEmpty()
+				? LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault()).minusYears(1L)
+				: LocalDate.parse(minDate));
+		list.add(maxDate.isEmpty() ? LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault())
+				: LocalDate.parse(maxDate));
+		return list;
 	}
 }
